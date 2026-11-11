@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Noumen — Log in</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        (function () {
+            var t = null;
+            try { t = localStorage.getItem('noumen-theme'); } catch (e) {}
+            if (t !== 'light' && t !== 'dark') {
+                t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
+</head>
+<body>
+<div class="container auth-page">
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle light/dark mode" title="Toggle theme">
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+
+    <div class="auth-card">
+        <img src="logo/logo1.png" alt="Noumen" class="auth-logo logo-light" onerror="this.style.display='none'">
+        <img src="logo/logo1-dark.png" alt="Noumen" class="auth-logo logo-dark" onerror="this.style.display='none'">
+        <p class="auth-tagline">Made by readers, for readers</p>
+
+        <div class="auth-tabs">
+            <button type="button" class="auth-tab active" data-mode="login">Log in</button>
+            <button type="button" class="auth-tab" data-mode="signup">Sign up</button>
+        </div>
+
+        <form id="authForm" novalidate>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" autocomplete="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" autocomplete="current-password" minlength="8" required>
+            </div>
+            <div class="form-group" id="confirmGroup" style="display:none;">
+                <label for="confirm">Confirm password</label>
+                <input type="password" id="confirm" autocomplete="new-password">
+            </div>
+            <p class="auth-error" id="authError" role="alert"></p>
+            <button type="submit" class="btn-primary auth-submit" id="authSubmit">Log in</button>
+        </form>
+    </div>
+</div>
+
+<script>
+(function () {
+    var mode = 'login';
+    var form = document.getElementById('authForm');
+    var errorEl = document.getElementById('authError');
+    var submitBtn = document.getElementById('authSubmit');
+    var confirmGroup = document.getElementById('confirmGroup');
+    var pw = document.getElementById('password');
+
+    // Already signed in → go to app
+    fetch('/api/me').then(function (r) { if (r.ok) location.replace('/'); }).catch(function () {});
+
+    document.getElementById('themeToggle').addEventListener('click', function () {
+        var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem('noumen-theme', next); } catch (e) {}
+    });
+
+    document.querySelectorAll('.auth-tab').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+            mode = tab.dataset.mode;
+            document.querySelectorAll('.auth-tab').forEach(function (t) { t.classList.toggle('active', t === tab); });
+            confirmGroup.style.display = mode === 'signup' ? 'block' : 'none';
+            pw.autocomplete = mode === 'signup' ? 'new-password' : 'current-password';
+            submitBtn.textContent = mode === 'signup' ? 'Create account' : 'Log in';
+            errorEl.textContent = '';
+        });
+    });
+
+    form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        errorEl.textContent = '';
+        var email = document.getElementById('email').value.trim();
+        var password = pw.value;
+
+        if (!email || !password) { errorEl.textContent = 'Enter email and password'; return; }
+        if (mode === 'signup') {
+            if (password.length < 8) { errorEl.textContent = 'Password must be at least 8 characters'; return; }
+            if (password !== document.getElementById('confirm').value) { errorEl.textContent = 'Passwords do not match'; return; }
+        }
+
+        submitBtn.disabled = true;
+        try {
+            var res = await fetch(mode === 'signup' ? '/api/signup' : '/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, password: password })
+            });
+            var data = await res.json().catch(function () { return {}; });
+            if (!res.ok) { errorEl.textContent = data.error || 'Something went wrong'; return; }
+            location.replace('/');
+        } catch (err) {
+            errorEl.textContent = 'Server unavailable';
+        } finally {
+            submitBtn.disabled = false;
+        }
+    });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Noumen — Book Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        (function () {
+            var t = null;
+            try { t = localStorage.getItem('noumen-theme'); } catch (e) {}
+            if (t !== 'light' && t !== 'dark') {
+                t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <button class="logout-btn" id="logoutBtn" type="button" aria-label="Log out" title="Log out">
+            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle light/dark mode" title="Toggle theme">
+            <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <img src="logo/logo1.png" alt="Book Tracker Logo" class="header-logo logo-light" onerror="this.style.display='none'">
+        <img src="logo/logo1-dark.png" alt="Book Tracker Logo" class="header-logo logo-dark" onerror="this.style.display='none'">
+        <p>Made by readers, for readers</p>
+    </div>
+
+    <!-- Search Box -->
+    <div class="search-container">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search by title, author, or category">
+            <button id="clearSearch" class="clear-btn" style="display:none;"><i class="fas fa-times"></i></button>
+        </div>
+    </div>
+
+    <!-- Status Tabs -->
+    <div class="status-tabs" id="statusTabs">
+        <button class="status-tab active" data-status="all">All</button>
+        <button class="status-tab" data-status="reading">Reading</button>
+        <button class="status-tab" data-status="to-read">To Read</button>
+        <button class="status-tab" data-status="completed">Completed</button>
+        <button class="status-tab" data-status="on-hold">On Hold</button>
+        <button class="status-tab" data-status="dropped">Dropped</button>
+    </div>
+
+    <!-- Library Header with View Toggle -->
+    <div class="library-header">
+        <div class="library-title-section">
+            <h2>Your Library</h2>
+            <span class="book-count" id="bookCount">0 books</span>
+        </div>
+        <div class="view-toggle">
+            <button class="view-btn active" data-view="grid-2" title="2 columns"><i class="fas fa-th"></i></button>
+            <button class="view-btn" data-view="grid-3" title="3 columns"><i class="fas fa-th-large"></i></button>
+            <button class="view-btn" data-view="list" title="List view"><i class="fas fa-list"></i></button>
+        </div>
+    </div>
+
+    <!-- Books List -->
+    <div class="books-container grid-2" id="booksContainer">
+        <div id="loadingSkeleton"><div class="skeleton-item"></div><div class="skeleton-item"></div><div class="skeleton-item"></div></div>
+    </div>
+
+    <!-- No results -->
+    <div class="no-results" id="noResults">
+        <i class="fas fa-book-open"></i>
+        <p>No books found</p>
+        <button class="btn-primary" onclick="openAddBookModal()"><i class="fas fa-plus"></i> Add Your First Book</button>
+    </div>
+
+    <!-- SVG Navigation -->
+    <nav class="nav-container">
+        <button class="nav-item active" data-nav="home">
+            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </button>
+        <button class="nav-item" data-nav="discover">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <button class="nav-center" data-nav="create">+</button>
+        <button class="nav-item" data-nav="stats">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        </button>
+        <button class="nav-item nav-avatar" data-nav="profile" aria-label="Profile">
+            <svg class="avatar-default" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>
+            <img class="avatar-img" id="navAvatarImg" alt="" hidden>
+        </button>
+    </nav>
+
+    <!-- Profile screen -->
+    <section class="profile-screen" id="profileScreen" hidden>
+        <div class="profile-top">
+            <div class="profile-banner">
+                <button class="banner-edit" type="button" aria-label="Change banner">
+                    <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                </button>
+            </div>
+            <div class="profile-avatar">
+                <svg class="profile-avatar-default" viewBox="0 0 100 100"><ellipse cx="50" cy="38" rx="21" ry="25"/><path d="M8 100c0-24 14-34 30-36h24c16 2 30 12 30 36z"/></svg>
+                <img class="profile-avatar-img" id="profileAvatarImg" alt="" hidden>
+                <span class="online-dot"></span>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Modals -->
+<div class="modal" id="bookModal"><div class="modal-content"><div class="modal-header"><h3 id="modalTitle">Add New Book</h3><button class="close-modal" onclick="closeBookModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><form id="bookForm"><div class="form-group"><label>Title *</label><input type="text" id="bookTitle" required></div><div class="form-group"><label>Author *</label><input type="text" id="bookAuthor" required></div><div class="form-group"><label>Status</label><select id="bookStatus"><option value="reading">Currently Reading</option><option value="completed">Completed</option><option value="to-read">Plan to Read</option><option value="on-hold">On Hold</option><option value="dropped">Dropped</option></select></div><div class="form-row"><div class="form-group half"><label>Current Chapter</label><input type="number" id="currentChapter" min="0"></div><div class="form-group half"><label>Total Chapters</label><input type="number" id="totalChapters" min="0"></div></div><div class="form-group"><label>Rating</label><div class="star-rating-input"><div class="star-rating" id="starRating"><span data-value="1"><i class="far fa-star"></i></span><span data-value="2"><i class="far fa-star"></i></span><span data-value="3"><i class="far fa-star"></i></span><span data-value="4"><i class="far fa-star"></i></span><span data-value="5"><i class="far fa-star"></i></span></div><div class="rating-text"><span id="ratingValue">0</span> / 5</div></div><input type="hidden" id="bookRating"></div><div class="form-group"><label>Category</label><input type="text" id="bookCategory"></div><div class="form-group"><label>Cover Image</label><div class="cover-upload" id="coverUpload"><i class="fas fa-image"></i><span>Click to upload cover</span><input type="file" id="coverImage" accept="image/*" style="display:none;"></div><div class="cover-preview" id="coverPreview"></div></div><div class="form-group"><label>Notes</label><textarea id="bookNotes" rows="3"></textarea></div><div class="modal-actions"><button type="button" class="btn-secondary" onclick="closeBookModal()">Cancel</button><button type="submit" class="btn-primary" id="saveBookBtn">Save Book</button></div></form></div></div></div>
+
+<div class="modal" id="detailsModal"><div class="modal-content"><div class="modal-header"><h3>Book Details</h3><button class="close-modal" onclick="closeDetailsModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div id="bookDetailsContent"></div><div class="details-actions" id="detailsActions"><button class="btn-edit" onclick="editCurrentBook()"><i class="fas fa-edit"></i> Edit</button><button class="btn-delete" onclick="initiateDelete()"><i class="fas fa-trash"></i> Delete</button></div></div></div></div>
+
+<div class="modal" id="statsSheet"><div class="modal-content bottom-sheet"><div class="sheet-handle"></div><div class="modal-header"><h3>Reading Stats</h3><button class="close-modal" onclick="closeStatsSheet()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="stats-grid" id="statsGrid"></div></div></div></div>
+
+<div class="modal" id="filterSheet"><div class="modal-content bottom-sheet"><div class="sheet-handle"></div><div class="modal-header"><h3>Filter & Sort</h3><button class="close-modal" onclick="closeFilterSheet()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="filter-section"><h4>Sort By</h4><div class="filter-options"><div class="filter-option"><input type="radio" name="sortBy" id="sortRecent" value="recent" checked><label for="sortRecent"><i class="fas fa-clock"></i><span>Recently Added</span></label></div><div class="filter-option"><input type="radio" name="sortBy" id="sortTitle" value="title"><label for="sortTitle"><i class="fas fa-sort-alpha-down"></i><span>Title (A–Z)</span></label></div><div class="filter-option"><input type="radio" name="sortBy" id="sortAuthor" value="author"><label for="sortAuthor"><i class="fas fa-user-edit"></i><span>Author</span></label></div></div></div><div class="filter-section"><h4>Filter by Author</h4><input type="text" id="filterAuthor" placeholder="Enter author name…"></div><div class="filter-section"><h4>Minimum Rating</h4><div class="star-filter" id="starFilter"><span data-value="1"><i class="far fa-star"></i></span><span data-value="2"><i class="far fa-star"></i></span><span data-value="3"><i class="far fa-star"></i></span><span data-value="4"><i class="far fa-star"></i></span><span data-value="5"><i class="far fa-star"></i></span></div><div>Min: <span id="minRating">0</span> stars</div></div><div class="filter-section"><h4>Added Date</h4><div class="date-options"><div class="date-option"><input type="radio" name="dateFilter" id="dateAll" value="all" checked><label for="dateAll">All Time</label></div><div class="date-option"><input type="radio" name="dateFilter" id="date3Days" value="3days"><label for="date3Days">Last 3 Days</label></div><div class="date-option"><input type="radio" name="dateFilter" id="date7Days" value="7days"><label for="date7Days">Last 7 Days</label></div><div class="date-option"><input type="radio" name="dateFilter" id="date1Month" value="1month"><label for="date1Month">Last Month</label></div></div></div><div class="filter-actions"><button type="button" class="btn-secondary" onclick="clearFilters()"><i class="fas fa-times"></i> Clear All</button><button type="button" class="btn-primary" onclick="applyFilters()"><i class="fas fa-check"></i> Apply</button></div></div></div></div>
+
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
